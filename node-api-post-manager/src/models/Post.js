@@ -24,4 +24,6 @@ const PostSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
+PostSchema.index({ title: "text" }); // for faster serch
+
 export default mongoose.model("Post", PostSchema);

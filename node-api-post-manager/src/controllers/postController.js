@@ -27,18 +27,46 @@ export const createPost = async (req, res) => {
 
 export const getAllPost = async (req, res) => {
     try {
-        const posts = await Post.find()
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 5;
+        const skip = (page - 1) * limit;
+
+        const search = req.query.search;
+        const skill = req.query.skill;
+
+        //Dynamic filter Object
+        let filter = {}
+
+        if (search) {
+            filter.title = { $regex: search, $options: "i" };
+        }
+
+        if (skill) {
+            filter.skills = skill;
+        }
+
+        const total = await Post.countDocuments(filter);
+
+        const posts = await Post.find(filter)
             .populate("user", "name email")
             .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
 
         if (!posts) {
             return res.status(401).json({ message: "There is no post, Plsese create a post" });
         }
 
-        res.json(posts)
+        res.json({
+            page,
+            limit,
+            total,
+            totalPage: Math.ceil(total / limit),
+            posts
+        })
 
     } catch (error) {
-        return res.status(500).json({ message: error.message });
+        res.status(500).json({ message: error.message });
     }
 }
 
@@ -56,7 +84,7 @@ export const getPostById = async (req, res) => {
 
 
     } catch (error) {
-        return res.status(500).json({ message: error.message });
+        res.status(500).json({ message: error.message });
     }
 }
 
@@ -87,7 +115,7 @@ export const updatePost = async (req, res) => {
         })
 
     } catch (error) {
-        return res.status(500).json({ message: error.message });
+        res.status(500).json({ message: error.message });
     }
 }
 
