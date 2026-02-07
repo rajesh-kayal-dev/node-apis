@@ -8,7 +8,7 @@ export const createPost = async (req, res) => {
             return res.status(400).json({ message: "title and description is required" })
         }
 
-        const NewPost = await Post.create({
+        const post = await Post.create({
             title,
             description,
             skills,
@@ -17,7 +17,7 @@ export const createPost = async (req, res) => {
 
         return res.status(201).json({
             message: "Post created",
-            "Post": NewPost
+            "Post": post
         })
 
     } catch (error) {
@@ -57,13 +57,15 @@ export const getAllPost = async (req, res) => {
             return res.status(401).json({ message: "There is no post, Plsese create a post" });
         }
 
-        res.json({
-            page,
-            limit,
-            total,
-            totalPage: Math.ceil(total / limit),
-            posts
-        })
+        if (posts.length === 0) {
+            return res.status(200).json({
+                page,
+                limit,
+                total,
+                totalPage: 0,
+                posts: []
+            });
+        }
 
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -77,7 +79,7 @@ export const getPostById = async (req, res) => {
             .populate("user", "name email")
 
         if (!post) {
-            return res.status(401).json({ message: "Post not found" });
+            return res.status(404).json({ message: "Post not found" });
         }
 
         res.json(post);
@@ -91,27 +93,18 @@ export const getPostById = async (req, res) => {
 export const updatePost = async (req, res) => {
     try {
 
-        const post = await Post.findById(req.params.id);
+        const post = req.post;
 
-        if (!post) {
-            return res.status(403).json({ message: "Post not found" });
-        }
-
-        //WONERSHIP CHECK
-        if (post.user.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ message: "Access denaied" });
-        }
-
-        post.title = req.body.title || post.title,
-            post.description = req.body.description || post.description,
-            post.skills = req.body.skills || post.skills,
+        post.title = req.body.title ?? post.title;
+        post.description = req.body.description ?? post.description;
+        post.skills = req.body.skills ?? post.skills;
 
 
-            await post.save();
+        await post.save();
 
         res.json({
             message: "Post updated",
-            post: post
+            post
         })
 
     } catch (error) {
@@ -123,13 +116,13 @@ export const deletePost = async (req, res) => {
     try {
         const post = await Post.findById(req.params.id);
         if (!post) {
-            res.status(403).json({ message: "Post not found" })
+           return res.status(404).json({ message: "Post not found" })
         }
 
-        //wonership check
-        if (post.user.toString() != req.user._id.toString()) {
-            return res.status(401).json({ message: "Aaccess denied" })
-        }
+        // //wonership check
+        // if (post.user.toString() != req.user._id.toString()) {
+        //     return res.status(401).json({ message: "Aaccess denied" })
+        // }
 
         await post.deleteOne();
 
