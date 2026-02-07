@@ -7,6 +7,7 @@ import PostRoutes from './routes/postRoutes.js'
 import helmet from 'helmet';
 import cors from "cors";
 import rateLimit from 'express-rate-limit';
+import cookieParser from 'cookie-parser';
 
 const apiLimiter = rateLimit({
     windowMs: 15 * 6 * 1000, //15 min
@@ -26,6 +27,7 @@ const app = express();
 
 //middleware
 app.use(express.json());
+app.use(cookieParser());
 app.use(helmet()); ///Helmet secures HTTP headers automatically.
 
 app.use(cors({//Prevents random websites from calling your API
@@ -60,7 +62,7 @@ app.listen(PORT, () => {
 
 //SECURE ERROR HANDLING
 app.use((err, req, res, next) => {
-  res.status(500).json({
-    message: "Something went wrong"
-  });
+    res.status(500).json({
+        message: "Something went wrong"
+    });
 });
